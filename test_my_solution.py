@@ -171,6 +171,42 @@ Epic|Availity|891|45
         self.assertEqual(key, ("a", "1"))
         self.assertEqual(length, 2)
 
+    def test_validate_sorted_detects_unsorted(self):
+        """Validation should detect unsorted input."""
+        import subprocess
+        content = "A|B|b|1\nB|A|a|1\n"  # 'b' < 'a' - unsorted
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
+            f.write(content)
+            path = f.name
+        try:
+            result = subprocess.run(
+                [os.environ.get("PYTHON", "python3"), "my_solution.py", "--sorted", "--validate", path],
+                cwd=os.path.dirname(os.path.abspath(__file__)) or ".",
+                capture_output=True,
+                text=True,
+            )
+            self.assertIn("Warning", result.stderr)
+        finally:
+            os.unlink(path)
+
+    def test_validate_sorted_passes_sorted(self):
+        """Validation should pass for sorted input."""
+        import subprocess
+        content = "A|B|a|1\nB|A|b|1\n"  # properly sorted
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
+            f.write(content)
+            path = f.name
+        try:
+            result = subprocess.run(
+                [os.environ.get("PYTHON", "python3"), "my_solution.py", "--sorted", "--validate", path],
+                cwd=os.path.dirname(os.path.abspath(__file__)) or ".",
+                capture_output=True,
+                text=True,
+            )
+            self.assertNotIn("Warning", result.stderr)
+        finally:
+            os.unlink(path)
+
 
 class TestSortedVsUnsortedSameResult(unittest.TestCase):
     """Unsorted and sorted mode must produce the same result (deterministic tie-break)."""

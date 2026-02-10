@@ -69,6 +69,27 @@ def run_unsorted(path):
     return best_key, best_len
 
 
+def validate_sorted_order(f):
+    """Check if input is sorted by (claim_id, status_code). Returns True if sorted, False otherwise."""
+    prev_key = None
+    line_number = 0
+    for line in f:
+        line_number += 1
+        line = line.rstrip("\n")
+        if not line:
+            continue
+        parts = line.split("|")
+        if len(parts) != 4:
+            continue
+        src, dst, claim_id, status_code = parts
+        key = (claim_id, status_code)
+        if prev_key is not None and key < prev_key:
+            return False, line_number
+        prev_key = key
+    f.seek(0)
+    return True, 0
+
+
 def run_sorted_stream(f):
     """Assume input is sorted by (claim_id, status_code). Hold only one group in memory. f: file-like."""
     best_len = 0
@@ -135,27 +156,39 @@ def run_sorted_stream(f):
     return best_key, best_len
 
 
-def run_sorted(path):
+def run_sorted(path, validate=False):
     """Assume input is sorted by (claim_id, status_code). Use path or stdin when path is '-'."""
     if path == "-":
+        if validate:
+            is_sorted, line_num = validate_sorted_order(sys.stdin)
+            if not is_sorted:
+                print(f"Warning: Input may not be sorted (disorder detected at line {line_num})", file=sys.stderr)
         return run_sorted_stream(sys.stdin)
     with open(path) as f:
+        if validate:
+            is_sorted, line_num = validate_sorted_order(f)
+            if not is_sorted:
+                print(f"Warning: Input may not be sorted (disorder detected at line {line_num})", file=sys.stderr)
         return run_sorted_stream(f)
 
 
 def main():
     argv = sys.argv[1:]
     if not argv:
-        print("Usage: python3 my_solution.py [--sorted] <input_file|->", file=sys.stderr)
+        print("Usage: python3 my_solution.py [--sorted] [--validate] <input_file|->", file=sys.stderr)
         sys.exit(1)
 
     sorted_mode = argv[0] == "--sorted"
+    validate_mode = "--validate" in argv
+    if validate_mode:
+        argv.remove("--validate")
+
     path = argv[1] if sorted_mode else argv[0]
     if sorted_mode and len(argv) < 2:
-        print("Usage: python3 my_solution.py [--sorted] <input_file|->", file=sys.stderr)
+        print("Usage: python3 my_solution.py [--sorted] [--validate] <input_file|->", file=sys.stderr)
         sys.exit(1)
 
-    best_key, best_len = (run_sorted(path) if sorted_mode else run_unsorted(path))
+    best_key, best_len = (run_sorted(path, validate=validate_mode) if sorted_mode else run_unsorted(path))
 
     if best_key is None:
         print("0,0,0")
