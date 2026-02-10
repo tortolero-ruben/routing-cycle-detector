@@ -30,7 +30,9 @@ def find_longest_cycle(edges):
 
 
 def run_unsorted(path):
-    """Accumulate all groups in memory, then find longest cycle per group. Use path or stdin when path is '-'."""
+    """Accumulate all groups in memory, then find longest cycle per group. Use path or stdin when path is '-'.
+    Note: For ties in cycle length, the first group encountered in input order is selected.
+    For deterministic lexicographic ordering, use sorted mode with --sorted flag."""
     sys_map = {}
     groups = defaultdict(set)
     f = sys.stdin if path == "-" else open(path)
