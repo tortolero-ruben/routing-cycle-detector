@@ -31,6 +31,10 @@ def find_longest_cycle(edges):
 
 def run_unsorted(path):
     """Accumulate all groups in memory, then find longest cycle per group. Use path or stdin when path is '-'.
+
+    Memory: Stores all groups and all unique system names in memory. For large files,
+    use sorted mode (--sorted) which streams one group at a time.
+
     Note: For ties in cycle length, the first group encountered in input order is selected.
     For deterministic lexicographic ordering, use sorted mode with --sorted flag."""
     sys_map = {}
