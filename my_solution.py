@@ -35,8 +35,8 @@ def run_unsorted(path):
     Memory: Stores all groups and all unique system names in memory. For large files,
     use sorted mode (--sorted) which streams one group at a time.
 
-    Note: For ties in cycle length, the first group encountered in input order is selected.
-    For deterministic lexicographic ordering, use sorted mode with --sorted flag."""
+    Note: For ties in cycle length, the lexicographically smallest (claim_id, status_code)
+    pair is selected. This behavior is consistent with sorted mode."""
     sys_map = {}
     groups = defaultdict(set)
     f = sys.stdin if path == "-" else open(path)
@@ -88,9 +88,18 @@ def validate_sorted_order(f):
         src, dst, claim_id, status_code = parts
         key = (claim_id, status_code)
         if prev_key is not None and key < prev_key:
+            # Rewind before returning (for seekable streams)
+            try:
+                f.seek(0)
+            except (OSError, AttributeError):
+                pass
             return False, line_number
         prev_key = key
-    f.seek(0)
+    # Rewind before returning (for seekable streams)
+    try:
+        f.seek(0)
+    except (OSError, AttributeError):
+        pass
     return True, 0
 
 
@@ -164,9 +173,15 @@ def run_sorted(path, validate=False):
     """Assume input is sorted by (claim_id, status_code). Use path or stdin when path is '-'."""
     if path == "-":
         if validate:
-            is_sorted, line_num = validate_sorted_order(sys.stdin)
+            # Buffer stdin for validation (since stdin can't be rewound)
+            import io
+            lines = list(sys.stdin)
+            buffer = io.StringIO(''.join(lines))
+            is_sorted, line_num = validate_sorted_order(buffer)
             if not is_sorted:
                 print(f"Warning: Input may not be sorted (disorder detected at line {line_num})", file=sys.stderr)
+            buffer.seek(0)
+            return run_sorted_stream(buffer)
         return run_sorted_stream(sys.stdin)
     with open(path) as f:
         if validate:

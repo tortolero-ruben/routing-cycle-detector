@@ -11,7 +11,7 @@ python3 my_solution.py input.txt
 # For large files (streaming, requires sorted input)
 python3 my_solution.py --sorted input.txt
 
-# Validate input is sorted (catches errors early)
+# Validate input is sorted (only works with --sorted flag)
 python3 my_solution.py --sorted --validate input.txt
 
 # Use with stdin
