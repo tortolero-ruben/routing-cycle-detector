@@ -1,4 +1,5 @@
 large_input_v1.txt
+sorted_input.txt
 progress.log
 *.pyc
 __pycache__/
