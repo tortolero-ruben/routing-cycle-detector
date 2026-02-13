@@ -1,1 +1,7 @@
 Single-pass stream (line-by-line); group edges by (claim_id, status_code). Intern system names to ints. Per group: iterative DFS for longest simple cycle (self-loops = 1). Prune groups that can't beat current best. Ties: lexicographic key. Use --sorted (or pipe from sort) for one group at a time; --validate verifies sorted. I/O O(L); cycle detection O(G · 2^N) with N = max nodes per group.
+
+• Possible speed improvements: csv.reader for parsing; chunked multiprocessing for I/O (merge overhead can outweigh gains); bitmask DFS when N is larger; process groups by descending edge count to find long cycles early and prune more.
+
+• Memory trade-offs: Default mode holds all groups in memory (O(G) keys + edges)—fast, but high RAM for many claim_ids. Sorted mode holds one group at a time—bounded group memory, but requires sorted input (e.g. external sort) or piping from sort.
+
+• Possible future improvements: Two-pass filter (count edges per group first, then load only promising groups); external sort + single-group stream for minimal memory; packed edge encoding (e.g. src*K+dst) to reduce Python object overhead; optional C extension or Rust for hot parse path.
