@@ -1,0 +1,8 @@
+#!/bin/sh
+# Strip "Co-authored-by: Cursor" from commit messages (do not add Cursor as co-author).
+msg_file="$1"
+[ -z "$msg_file" ] && exit 0
+tmp=$(mktemp)
+sed '/^Co-authored-by: Cursor/d' "$msg_file" > "$tmp"
+mv "$tmp" "$msg_file"
+exit 0
